@@ -3,8 +3,9 @@
 void Ws2812fxDriver::begin() {
     ws2812fx_.init();
     ws2812fx_.setMode(FX_MODE_STATIC);
-    ws2812fx_.setMode(FX_MODE_RUNNING_RANDOM2);
-    ws2812fx_.setMode(FX_MODE_MERRY_CHRISTMAS);
+#if defined(STRANDS_WS2812FX_MODE_DEFAULT)
+    ws2812fx_.setMode(STRANDS_WS2812FX_MODE_DEFAULT);
+#endif
     ws2812fx_.setBrightness(STRANDS_BRIGHTNESS);
     ws2812fx_.setColor(0xFF5900);
     ws2812fx_.setSpeed(1000);
