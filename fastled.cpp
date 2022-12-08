@@ -50,7 +50,7 @@ void FastLedDriver::palettes() {
 
 // This function draws color waves with an ever-changing, widely-varying set
 // of parameters, using a color palette.
-void FastLedDriver::color_waves(CRGB *ledarray, uint16_t num_leds, CRGBPalette16 &palette) {
+void FastLedDriver::color_waves(CRGB *leds, uint16_t number_leds, CRGBPalette16 &palette) {
     static uint16_t sPseudotime = 0;
     static uint16_t sLastMillis = 0;
     static uint16_t sHue16 = 0;
@@ -70,7 +70,7 @@ void FastLedDriver::color_waves(CRGB *ledarray, uint16_t num_leds, CRGBPalette16
     sHue16 += delta_ms * beatsin88(400, 5, 9);
     uint16_t brightness_theta16 = sPseudotime;
 
-    for (uint16_t i = 0u; i < num_leds; i++) {
+    for (uint16_t i = 0u; i < number_leds; i++) {
         hue16 += hueinc16;
         uint8_t hue8 = hue16 / 256;
         uint16_t h16_128 = hue16 >> 7;
@@ -94,8 +94,8 @@ void FastLedDriver::color_waves(CRGB *ledarray, uint16_t num_leds, CRGBPalette16
         CRGB new_color = ColorFromPalette(palette, index, bri8);
 
         uint16_t pixel_number = i;
-        pixel_number = (num_leds - 1) - pixel_number;
-        nblend(ledarray[pixel_number], new_color, 128);
+        pixel_number = (number_leds - 1) - pixel_number;
+        nblend(leds[pixel_number], new_color, 128);
     }
 }
 
