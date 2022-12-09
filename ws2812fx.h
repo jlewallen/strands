@@ -7,15 +7,19 @@
 class Ws2812fxDriver {
 private:
     WS2812FX ws2812fx_{ STRANDS_NUMBER_LEDS, STRANDS_DATA_PIN, NEO_RGB + NEO_KHZ800 };
+    bool enabled_{ false };
 
 public:
     void begin();
 
     void service(bool enabled);
 
+private:
     void blank(uint32_t color);
 
 public:
+    bool isRunning();
+
     uint8_t getBrightness();
 
     void setBrightness(uint8_t value);
