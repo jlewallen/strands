@@ -15,7 +15,7 @@ upload-desk: build-desk
 
 
 build-tree-living: build-deps
-	arduino-cli compile -b $(FQBN)--build-path $(TARGET)/tree-living --build-property "build.extra_flags=-DESP8266 -Dleds_tree_living"
+	arduino-cli compile -b $(FQBN) --build-path $(TARGET)/tree-living --build-property "build.extra_flags=-DESP8266 -Dleds_tree_living"
 
 upload-tree-living: build-tree-living
 	arduino-cli upload -b $(FQBN) -i $(TARGET)/tree-living/strands.ino.bin --port /dev/ttyUSB0
