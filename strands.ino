@@ -54,11 +54,10 @@ void loop() {
     web_server.service();
 
     EVERY_N_MILLISECONDS(5000) {
-        Serial.print(" ");
         Serial.print(millis());
         Serial.print(" | ");
 
-#if defined(STRANDS_ENABLE_WIFI)
+#if defined(STRANDS_ENABLE_NTP)
         timeval moment;
         gettimeofday(&moment, NULL);
         tm *local_tm = localtime(&moment.tv_sec);

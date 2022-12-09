@@ -1,14 +1,8 @@
 #include <ArduinoOTA.h>
-
 #include <ESP8266HTTPClient.h>
-#if defined(STRANDS_WEB_SYNC)
-#include <ESP8266WebServer.h>
-#else
-#include <ESPAsyncWebServer.h>
-#endif
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-
+#include <ESPAsyncWebServer.h>
 #include <ESPNtpClient.h>
 #include <WiFiUdp.h>
 
@@ -23,17 +17,7 @@
 
 extern LedDriver leds;
 
-#if defined(STRANDS_WEB_SYNC)
-static ESP8266WebServer server{ 80 };
-
-void srv_handle_not_found();
-void srv_handle_index_html();
-void srv_handle_bundle_js();
-void srv_handle_modes();
-void srv_handle_set();
-#else
 static AsyncWebServer server{ 80 };
-#endif
 
 WebServer::WebServer() {
 }
@@ -58,13 +42,6 @@ void WebServer::begin() {
   */
     Serial.println("wifi:connected");
 
-#if defined(STRANDS_WEB_SYNC)
-    server.onNotFound(srv_handle_not_found);
-    server.on("/", srv_handle_index_html);
-    server.on("/bundle.js", srv_handle_bundle_js);
-    server.on("/modes", srv_handle_modes);
-    server.on("/set", srv_handle_set);
-#else
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(404, "text/plain", "not found"); });
 
     /*
@@ -167,7 +144,6 @@ void WebServer::begin() {
     });
 
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-#endif
 
     server.begin();
 
@@ -216,6 +192,7 @@ void WebServer::begin() {
     NTP.onNTPSyncEvent([&](NTPEvent_t event) {
         switch (event.event) {
         case timeSyncd:
+            Serial.println("ntp: synced");
             have_time_ = true;
             break;
         default:
@@ -229,102 +206,4 @@ void WebServer::begin() {
 
 void WebServer::service() {
     ArduinoOTA.handle();
-
-#if defined(STRANDS_WEB_SYNC)
-    server.handleClient();
-#endif
 }
-
-#if defined(STRANDS_WEB_SYNC)
-
-void srv_handle_not_found() {
-    server.send(404, "text/plain", "not found");
-}
-
-void srv_handle_index_html() {
-    server.send(200, "text/html", www_index_html, www_index_html_len);
-}
-
-void srv_handle_bundle_js() {
-    server.send(200, "application/javascript", www_bundle_js, www_bundle_js_len);
-}
-
-String modes = "";
-
-void modes_setup() {
-    modes = "";
-    uint8_t num_modes = leds.getModeCount();
-    for (uint8_t i = 0; i < num_modes; i++) {
-        modes += "<li><a href='#'>";
-        modes += leds.getModeName(i);
-        modes += "</a></li>";
-    }
-}
-
-void srv_handle_modes() {
-    if (modes.length() == 0) {
-        modes_setup();
-    }
-    server.send(200, "text/plain", modes);
-}
-
-void srv_handle_set() {
-    for (uint8_t i = 0; i < server.args(); i++) {
-        if (server.argName(i) == "c") {
-            uint32_t tmp = (uint32_t)strtol(server.arg(i).c_str(), NULL, 10);
-            if (tmp <= 0xFFFFFF) {
-                leds.setColor(tmp);
-            }
-        }
-
-        if (server.argName(i) == "m") {
-            uint8_t tmp = (uint8_t)strtol(server.arg(i).c_str(), NULL, 10);
-            uint8_t new_mode = tmp % leds.getModeCount();
-            leds.setMode(new_mode);
-            // auto_cycle = false;
-            Serial.print("mode is ");
-            Serial.println(leds.getModeName(leds.getMode()));
-        }
-
-        if (server.argName(i) == "b") {
-            if (server.arg(i)[0] == '-') {
-                leds.setBrightness(leds.getBrightness() * 0.8);
-            } else if (server.arg(i)[0] == ' ') {
-                leds.setBrightness(std::min(std::max(leds.getBrightness(), (uint8_t)5) * 1.2, 255.0));
-            } else { // set brightness directly
-                uint8_t tmp = (uint8_t)strtol(server.arg(i).c_str(), NULL, 10);
-                leds.setBrightness(tmp);
-            }
-            Serial.print("brightness is ");
-            Serial.println(leds.getBrightness());
-        }
-
-        if (server.argName(i) == "s") {
-            if (server.arg(i)[0] == '-') {
-                leds.setSpeed(max(leds.getSpeed(), (uint16_t)5) * 1.2);
-            } else if (server.arg(i)[0] == ' ') {
-                leds.setSpeed(leds.getSpeed() * 0.8);
-            } else {
-                uint16_t tmp = (uint16_t)strtol(server.arg(i).c_str(), NULL, 10);
-                leds.setSpeed(tmp);
-            }
-            Serial.print("speed is ");
-            Serial.println(leds.getSpeed());
-        }
-
-        /*
-        if (server.argName(i) == "a") {
-            if (server.arg(i)[0] == '-') {
-                auto_cycle = false;
-            } else {
-                auto_cycle = true;
-                auto_last_change = 0;
-            }
-        }
-        */
-    }
-
-    server.send(200, "text/plain", "OK");
-}
-
-#endif
