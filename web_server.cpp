@@ -117,6 +117,12 @@ void WebServer::begin() {
         request->send(200, "text/plain", modes);
     });
 
+    server.on("/palettes", [](AsyncWebServerRequest *request) {
+        Serial.println("httpd: serving /palettes");
+
+        request->send(200, "text/plain", "{ \"palettes\": [] }");
+    });
+
     server.on("/set", [](AsyncWebServerRequest *request) {
         Serial.println("httpd: serving /set");
 
