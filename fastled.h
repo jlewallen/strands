@@ -9,12 +9,11 @@
 #include "palettes.h"
 #include "secrets.h"
 
-extern uint8_t gCurrentPaletteNumber;
-extern CRGBPalette16 gCurrentPalette;
-extern CRGBPalette16 gTargetPalette;
-
 class FastLedDriver {
 private:
+    uint8_t palette_number_{ 0 };
+    CRGBPalette16 current_{ CRGB::Black };
+    CRGBPalette16 target_{ gGradientPalettes[0] };
     CRGB leds_[STRANDS_NUMBER_LEDS];
 
 public:
@@ -26,12 +25,4 @@ public:
 
 private:
     void palettes();
-
-    // This function draws color waves with an ever-changing, widely-varying set
-    // of parameters, using a color palette.
-    void color_waves(CRGB *ledarray, uint16_t num_leds, CRGBPalette16 &palette);
-
-    // Alternate rendering function just scrolls the current palette across the
-    // defined LED strip.
-    void palette_test(CRGB *leds_array, uint16_t number_leds, CRGBPalette16 const &current_palette);
 };
