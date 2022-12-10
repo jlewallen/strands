@@ -29,17 +29,16 @@ void WebServer::begin() {
 
     Serial.println("wifi:connecting");
 
+    auto started = millis();
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
+
+        if (millis() - started > 10000) {
+            ESP.restart();
+        }
     }
-    /*
-      while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-          Serial.println("wifi:failed");
-          delay(5000);
-          ESP.restart();
-      }
-  */
+
     Serial.println("wifi:connected");
 
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(404, "text/plain", "not found"); });
