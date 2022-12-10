@@ -16,6 +16,11 @@ Right now there's quite a hodge podge of these as I experiment with different li
 
 # Future Work
 
+### Presets
+
+  1. Window Sparkle - HyperSparkle with dark blue base and white sparkles.
+  2. Fireflickr - Any with deep oranges/yellows.
+
 ### TODOs
 
   1. Leverage palettes code to drive WS2812fx effects, for example Fireworks.
