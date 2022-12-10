@@ -41,9 +41,12 @@ void setup() {
 
     leds.begin();
 
+#if defined(STRANDS_ENABLE_WIFI)
+
     Serial.println("web-server:begin");
 
     web_server.begin();
+#endif
 
     Serial.println("startup:done");
 }
@@ -51,7 +54,9 @@ void setup() {
 void loop() {
     leds.service(enabled);
 
+#if defined(STRANDS_ENABLE_WIFI)
     web_server.service();
+#endif
 
     EVERY_N_MILLISECONDS(5000) {
         Serial.print(millis());
