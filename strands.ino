@@ -32,8 +32,10 @@ void tests() {
 
 void setup() {
     Serial.begin(115200);
+    pinMode(STRANDS_LED_PIN, OUTPUT);
+    digitalWrite(STRANDS_LED_PIN, LOW);
 
-    Serial.println("Hello!");
+    Serial.println("startup:begin!");
 
     tests();
 
@@ -49,6 +51,8 @@ void setup() {
 #endif
 
     Serial.println("startup:done");
+
+    digitalWrite(STRANDS_LED_PIN, HIGH);
 }
 
 void loop() {
