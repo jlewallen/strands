@@ -2,7 +2,12 @@
 
 #include <FastLED.h>
 
-extern const TProgmemRGBGradientPalettePtr gGradientPalettes[];
+typedef struct StaticGradient {
+    const char *name;
+    TProgmemRGBGradientPalettePtr p;
+} StaticGradient;
+
+extern const StaticGradient gGradientPalettes[];
 extern const uint8_t gGradientPaletteCount;
 extern const size_t gGradientPaletteBytes;
 

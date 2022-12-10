@@ -13,7 +13,7 @@ class FastLedDriver {
 private:
     uint8_t palette_number_{ 0 };
     CRGBPalette16 current_{ CRGB::Black };
-    CRGBPalette16 target_{ gGradientPalettes[0] };
+    CRGBPalette16 target_{ gGradientPalettes[0].p };
     CRGB leds_[STRANDS_NUMBER_LEDS];
 
 public:

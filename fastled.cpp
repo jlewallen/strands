@@ -28,7 +28,7 @@ void FastLedDriver::blank(uint32_t color) {
 void FastLedDriver::palettes() {
     EVERY_N_SECONDS(STRANDS_SECONDS_PER_PALETTE) {
         palette_number_ = addmod8(palette_number_, 1, gGradientPaletteCount);
-        target_ = gGradientPalettes[palette_number_];
+        target_ = gGradientPalettes[palette_number_].p;
     }
 
     EVERY_N_MILLISECONDS(40) {
