@@ -65,6 +65,7 @@
     ul.control {
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       justify-content: flex-end;
       align-items: center;
       padding: 0px;
@@ -83,7 +84,13 @@
       <div>
         <ul class='control'>
           <li><a href='#' onclick="onBrightness(event, '-')">&#9788;</a></li>
+          <li><a href='#' onclick="onBrightness(event, '0')">0</a></li>
+          <li><a href='#' onclick="onBrightness(event, '32')">32</a></li>
+          <li><a href='#' onclick="onBrightness(event, '128')">128</a></li>
+          <li><a href='#' onclick="onBrightness(event, '255')">255</a></li>
           <li><a href='#' onclick="onBrightness(event, '+')">&#9728;</a></li>
+        </ul>
+        <ul class='control'>
           <li><a href='#' onclick="onSpeed(event, '-')">&#8722;</a></li>
           <li><a href='#' onclick="onSpeed(event, '+')">&#43;</a></li>
         </ul>
