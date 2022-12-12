@@ -1,11 +1,6 @@
-var activeButton = null;
-var colorCanvas = null;
-window.addEventListener("DOMContentLoaded", (event) => {
-  // init the canvas color picker
-  colorCanvas = document.getElementById("color-canvas");
-  var colorctx = colorCanvas.getContext("2d");
-  // Create color gradient
-  var gradient = colorctx.createLinearGradient(0, 0, colorCanvas.width - 1, 0);
+function createColorGradient(canvas) {
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width - 1, 0);
   gradient.addColorStop(0, "rgb(255,   0,   0)");
   gradient.addColorStop(0.16, "rgb(255,   0, 255)");
   gradient.addColorStop(0.33, "rgb(0,     0, 255)");
@@ -13,83 +8,112 @@ window.addEventListener("DOMContentLoaded", (event) => {
   gradient.addColorStop(0.66, "rgb(0,   255,   0)");
   gradient.addColorStop(0.82, "rgb(255, 255,   0)");
   gradient.addColorStop(1, "rgb(255,   0,   0)");
-  // Apply gradient to canvas
-  colorctx.fillStyle = gradient;
-  colorctx.fillRect(0, 0, colorCanvas.width - 1, colorCanvas.height - 1);
-  // Create semi transparent gradient (white -> transparent -> black)
-  gradient = colorctx.createLinearGradient(0, 0, 0, colorCanvas.height - 1);
+  return gradient;
+}
+
+function createTransparentGradient(canvas) {
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height - 1);
   gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
   gradient.addColorStop(0.48, "rgba(255, 255, 255, 0)");
   gradient.addColorStop(0.52, "rgba(0,     0,   0, 0)");
   gradient.addColorStop(1, "rgba(0,     0,   0, 1)");
-  // Apply gradient to canvas
-  colorctx.fillStyle = gradient;
-  colorctx.fillRect(0, 0, colorCanvas.width - 1, colorCanvas.height - 1);
-  // setup the canvas click listener
+  return gradient;
+}
+
+function createColorCanvas() {
+  const canvas = document.getElementById("color-canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = createColorGradient(canvas);
+  ctx.fillRect(0, 0, canvas.width - 1, canvas.height - 1);
+  ctx.fillStyle = createTransparentGradient(canvas);
+  ctx.fillRect(0, 0, canvas.width - 1, canvas.height - 1);
+  return canvas;
+}
+
+window.addEventListener("DOMContentLoaded", (event) => {
+  const colorCanvas = createColorCanvas();
+
   colorCanvas.addEventListener("click", (event) => {
-    var imageData = colorCanvas
+    const imageData = colorCanvas
       .getContext("2d")
       .getImageData(event.offsetX, event.offsetY, 1, 1);
-    var selectedColor =
-      "rgb(" +
-      imageData.data[0] +
-      "," +
-      imageData.data[1] +
-      "," +
-      imageData.data[2] +
-      ")";
-    //console.log('click: ' + event.offsetX + ', ' + event.offsetY + ', ' + selectedColor);
-    document.getElementById("color-value").value = selectedColor;
-    selectedColor =
-      imageData.data[0] * 65536 + imageData.data[1] * 256 + imageData.data[2];
-    submitVal("c", selectedColor);
+    const rgb = [imageData.data[0], imageData.data[1], imageData.data[2]];
+    const selectedColor = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
+    const integer = rgb[0] * 65536 + rgb[1] * 256 + rgb[2];
+
+    console.log(
+      "click: " + event.offsetX + ", " + event.offsetY + ", " + selectedColor
+    );
+
+    $("#color-value").val(selectedColor);
+
+    submitVal("c", integer);
   });
-  // get list of modes from ESP
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function () {
-    if (xhttp.readyState == 4 && xhttp.status == 200) {
-      document.getElementById("modes").innerHTML = xhttp.responseText;
-      modes = document.querySelectorAll("ul#modes li a");
-      modes.forEach(initMode);
-    }
-  };
-  xhttp.open("GET", "modes", true);
-  xhttp.send();
-});
-function initMode(mode, index) {
-  mode.addEventListener("click", (event) => onMode(event, index));
-}
-function onColor(event, color) {
-  event.preventDefault();
-  var match = color.match(/rgb\(([0-9]*),([0-9]*),([0-9]*)\)/);
-  if (match) {
-    var colorValue =
-      Number(match[1]) * 65536 + Number(match[2]) * 256 + Number(match[3]);
-    //console.log('onColor:' + match[1] + "," + match[2] + "," + match[3] + "," + colorValue);
-    submitVal("c", colorValue);
+
+  function onPalette(event, palette) {
+    event.preventDefault();
+    $("#palettes .active").removeClass("active");
+    $(event.target).addClass("active");
+    submitVal("p", palette);
   }
-}
-function onMode(event, mode) {
-  event.preventDefault();
-  if (activeButton) activeButton.classList.remove("active");
-  activeButton = event.target;
-  activeButton.classList.add("active");
-  submitVal("m", mode);
-}
+
+  $.ajax({
+    url: "palettes.json",
+  }).then((response) => {
+    console.log("palettes", response);
+    $("#palettes").append(
+      response.palettes.map((row, index) =>
+        $('<a href="#">' + row.name + "</a>")
+          .click((event) => {
+            console.log("palette", index, row);
+            onPalette(event, index);
+          })
+          .wrap("<li></li>")
+          .parent()
+      )
+    );
+  });
+
+  function onMode(event, mode) {
+    event.preventDefault();
+    $("#modes .active").removeClass("active");
+    $(event.target).addClass("active");
+    submitVal("m", mode);
+  }
+
+  $.ajax({
+    url: "modes.json",
+  }).then((response) => {
+    console.log("modes", response);
+    $("#modes").append(
+      response.modes.map((row, index) =>
+        $('<a href="#">' + row.name + "</a>")
+          .click((event) => {
+            console.log("mode", index, row);
+            onMode(event, index);
+          })
+          .wrap("<li></li>")
+          .parent()
+      )
+    );
+  });
+});
+
 function onBrightness(event, dir) {
   event.preventDefault();
   submitVal("b", dir);
 }
+
 function onSpeed(event, dir) {
   event.preventDefault();
   submitVal("s", dir);
 }
-function onAuto(event, dir) {
-  event.preventDefault();
-  submitVal("a", dir);
-}
+
 function submitVal(name, val) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.open("GET", "set?" + name + "=" + val, true);
-  xhttp.send();
+  $.ajax({
+    url: "set?" + name + "=" + val,
+  }).then(() => {
+    console.log("ok");
+  });
 }
