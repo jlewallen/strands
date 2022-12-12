@@ -143,13 +143,13 @@ void WebServer::begin() {
         if (request->hasParam("p")) {
             auto p = request->getParam("p");
             auto index = (uint8_t)strtol(p->value().c_str(), NULL, 10);
-            auto new_palette = index % gGradientPaletteCount;
             Serial.print("httpd: palette is ");
             if (index == 0) {
                 Serial.println("NONE");
                 leds.setColor(STRANDS_WS2812FX_DEFAULT_COLOR);
             } else {
-                auto pal = gGradientPalettes[new_palette - 1];
+                auto new_palette = (index - 1) % gGradientPaletteCount;
+                auto pal = gGradientPalettes[new_palette];
                 Serial.println(pal.name);
 
                 CRGBPalette16 palette{ pal.p };
