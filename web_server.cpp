@@ -6,9 +6,8 @@
 #include <ESPNtpClient.h>
 #include <WiFiUdp.h>
 
+#include "palettes.h"
 #include "web_server.h"
-
-#include "fastled.h"
 #include "ws2812fx.h"
 
 #include "static.g.h"
@@ -61,6 +60,14 @@ void WebServer::begin() {
         request->send(response);
     });
 
+    server.on("/jquery-3.6.1.min.js", [](AsyncWebServerRequest *request) {
+        Serial.println("httpd: serving /jquery-3.6.1.min.js");
+
+        AsyncWebServerResponse *response = request->beginResponse_P(
+            200, "application/javascript", www_jquery_3_6_1_min_js, www_jquery_3_6_1_min_js_len);
+        request->send(response);
+    });
+
     server.on("/bundle.js", [](AsyncWebServerRequest *request) {
         Serial.println("httpd: serving /bundle.js");
 
@@ -72,25 +79,9 @@ void WebServer::begin() {
     server.on("/status", [](AsyncWebServerRequest *request) {
         Serial.println("httpd: serving /status");
 
-        if (request->hasParam("running")) {
-            AsyncWebParameter *p = request->getParam("running");
-            const char *running = p->value().c_str();
-            if (strcmp(running, "true") == 0) {
-                // ws2812fx_.start();
-            } else {
-                // ws2812fx_.stop();
-            }
-        }
-
         /*
-        if (request->hasParam("auxFunc")) {
-            AsyncWebParameter *p = request->getParam("auxFunc");
-            int auxFuncIndex = atoi(p->value().c_str());
-            size_t customAuxFuncSize = sizeof(customAuxFunc) / sizeof(customAuxFunc[0]);
-            if (auxFuncIndex >= 0 && (size_t)auxFuncIndex < customAuxFuncSize) {
-                customAuxFunc[auxFuncIndex]();
-            }
-        }
+        uint8_t macAddr[6];
+        WiFi.macAddress(macAddr);
         */
 
         char status[50] = "{\"version\":\"";
@@ -102,47 +93,114 @@ void WebServer::begin() {
         request->send(200, "application/json", status);
     });
 
-    // TODO JSON
-    server.on("/modes", [](AsyncWebServerRequest *request) {
-        Serial.println("httpd: serving /modes");
+    server.on("/modes.json", [](AsyncWebServerRequest *request) {
+        Serial.println("httpd: serving /modes.json");
 
-        String modes = "";
-        uint8_t num_modes = leds.getModeCount();
-        for (uint8_t i = 0; i < num_modes; i++) {
-            modes += "<li><a href='#'>";
-            modes += leds.getModeName(i);
-            modes += "</a></li>";
+        String body = "{ \"modes\": [";
+        for (auto i = 0u; i < leds.getModeCount(); i++) {
+            if (i > 0) {
+                body += ", ";
+            }
+            body += "{ \"key\": " + String(i) + ", \"name\": \"";
+            body += leds.getModeName(i);
+            body += "\" }";
         }
+        body += "] }";
 
-        request->send(200, "text/plain", modes);
+        request->send(200, "application/json", body);
     });
 
-    server.on("/palettes", [](AsyncWebServerRequest *request) {
-        Serial.println("httpd: serving /palettes");
+    server.on("/palettes.json", [](AsyncWebServerRequest *request) {
+        Serial.println("httpd: serving /palettes.json");
 
-        request->send(200, "text/plain", "{ \"palettes\": [] }");
+        String body = "{ \"palettes\": [";
+        body += "{ \"key\": 0, \"name\": \"None\" }";
+        for (auto i = 0u; i < gGradientPaletteCount; i++) {
+            body += ", ";
+            body += "{ \"key\": " + String(i + 1) + ", \"name\": \"";
+            body += gGradientPalettes[i].name;
+            body += "\" }";
+        }
+        body += "] }";
+
+        request->send(200, "application/json", body);
     });
 
     server.on("/set", [](AsyncWebServerRequest *request) {
         Serial.println("httpd: serving /set");
 
         if (request->hasParam("c")) {
-            AsyncWebParameter *p = request->getParam("c");
-            uint32_t tmp = (uint32_t)strtol(p->value().c_str(), NULL, 10);
-            if (tmp <= 0xFFFFFF) {
-                leds.setColor(tmp);
+            auto p = request->getParam("c");
+            auto index = (uint32_t)strtol(p->value().c_str(), NULL, 10);
+            if (index <= 0xFFFFFF) {
+                leds.setColor(index);
+            }
+
+            Serial.print("httpd: color is ");
+            Serial.println(index);
+        }
+
+        if (request->hasParam("p")) {
+            auto p = request->getParam("p");
+            auto index = (uint8_t)strtol(p->value().c_str(), NULL, 10);
+            auto new_palette = index % gGradientPaletteCount;
+            Serial.print("httpd: palette is ");
+            if (index == 0) {
+                Serial.println("NONE");
+                leds.setColor(STRANDS_WS2812FX_DEFAULT_COLOR);
+            } else {
+                auto pal = gGradientPalettes[new_palette - 1];
+                Serial.println(pal.name);
+
+                CRGBPalette16 palette{ pal.p };
+                leds.setPalette(palette);
             }
         }
 
         if (request->hasParam("m")) {
-            AsyncWebParameter *p = request->getParam("m");
-            uint8_t tmp = (uint8_t)strtol(p->value().c_str(), NULL, 10);
-            uint8_t new_mode = tmp % leds.getModeCount();
-            leds.setMode(new_mode);
+            auto p = request->getParam("m");
+            auto index = (uint8_t)strtol(p->value().c_str(), NULL, 10);
+            leds.setMode(index % leds.getModeCount());
 
-            Serial.print("httpd: ");
-            Serial.print("mode is ");
+            Serial.print("httpd: mode is ");
             Serial.println(leds.getModeName(leds.getMode()));
+        }
+
+        if (request->hasParam("b")) {
+            auto b = request->getParam("b");
+            if (b->value()[0] == '-') {
+                leds.setBrightness(leds.getBrightness() * 0.8);
+            } else if (b->value()[0] == ' ') {
+                leds.setBrightness(std::min(std::max(leds.getBrightness(), (uint8_t)5) * 1.2, 255.0));
+            } else {
+                leds.setBrightness((uint8_t)strtol(b->value().c_str(), NULL, 10));
+            }
+
+            Serial.print("httpd: brightness is ");
+            Serial.println(leds.getBrightness());
+        }
+
+        if (request->hasParam("s")) {
+            auto s = request->getParam("s");
+            if (s->value()[0] == '-') {
+                leds.setSpeed(max(leds.getSpeed(), (uint16_t)5) * 1.2);
+            } else if (s->value()[0] == ' ') {
+                leds.setSpeed(leds.getSpeed() * 0.8);
+            } else {
+                leds.setSpeed((uint16_t)strtol(s->value().c_str(), NULL, 10));
+            }
+
+            Serial.print("httpd: speed is ");
+            Serial.println(leds.getSpeed());
+        }
+
+        if (request->hasParam("r")) {
+            auto p = request->getParam("r");
+            if (strcmp(p->value().c_str(), "true") == 0) {
+                leds.start();
+            } else {
+                leds.stop();
+            }
         }
 
         request->send(200, "text/plain", "{}");
@@ -152,13 +210,10 @@ void WebServer::begin() {
 
     server.begin();
 
-    /*
-    uint8_t macAddr[6];
-    WiFi.macAddress(macAddr);
-    */
-
 #if defined(STRANDS_ENABLE_OTA)
     ArduinoOTA.setHostname(STRANDS_WIFI_NAME);
+
+    ArduinoOTA.setPassword(STRANDS_OTA_PASSWORD);
 
     ArduinoOTA.onStart([]() { Serial.println("ota: start"); });
 

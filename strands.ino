@@ -2,7 +2,6 @@
 
 #include "web_server.h"
 
-#include "fastled.h"
 #include "ws2812fx.h"
 
 #include "secrets.h"

@@ -396,4 +396,4 @@ const size_t gGradientPaletteBytes =
     sizeof(BlacK_Blue_Magenta_White_gp) + sizeof(BlacK_Magenta_Red_gp) + sizeof(BlacK_Red_Magenta_Yellow_gp) +
     sizeof(Blue_Cyan_Yellow_gp);
 
-const uint8_t gGradientPaletteCount = sizeof(gGradientPalettes) / sizeof(TProgmemRGBGradientPalettePtr);
+const uint8_t gGradientPaletteCount = sizeof(gGradientPalettes) / sizeof(StaticGradient);
