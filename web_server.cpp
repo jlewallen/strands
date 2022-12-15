@@ -56,7 +56,8 @@ void WebServer::begin() {
         Serial.println("httpd: serving /");
 
         AsyncWebServerResponse *response =
-            request->beginResponse_P(200, "text/html", www_index_html, www_index_html_len);
+            request->beginResponse_P(200, "text/html", www_index_html_gz, www_index_html_gz_len);
+        response->addHeader("Content-Encoding", "gzip");
         request->send(response);
     });
 
@@ -70,10 +71,11 @@ void WebServer::begin() {
     });
 
     server.on("/bundle.js", [](AsyncWebServerRequest *request) {
-        Serial.println("httpd: serving /bundle.js");
+        Serial.println("httpd: serving /bundle.js.gz");
 
         AsyncWebServerResponse *response =
-            request->beginResponse_P(200, "application/javascript", www_bundle_js, www_bundle_js_len);
+            request->beginResponse_P(200, "application/javascript", www_bundle_js_gz, www_bundle_js_gz_len);
+        response->addHeader("Content-Encoding", "gzip");
         request->send(response);
     });
 
