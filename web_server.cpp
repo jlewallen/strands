@@ -61,10 +61,11 @@ void WebServer::begin() {
     });
 
     server.on("/jquery-3.6.1.min.js", [](AsyncWebServerRequest *request) {
-        Serial.println("httpd: serving /jquery-3.6.1.min.js");
+        Serial.println("httpd: serving /jquery-3.6.1.min.js.gz");
 
         AsyncWebServerResponse *response = request->beginResponse_P(
-            200, "application/javascript", www_jquery_3_6_1_min_js, www_jquery_3_6_1_min_js_len);
+            200, "application/javascript", www_jquery_3_6_1_min_js_gz, www_jquery_3_6_1_min_js_gz_len);
+        response->addHeader("Content-Encoding", "gzip");
         request->send(response);
     });
 

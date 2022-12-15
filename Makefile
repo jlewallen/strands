@@ -37,11 +37,11 @@ upload-house-eaves: build-house-eaves
 
 build-deps: static.g.h
 
-static.g.h: www/index.html www/bundle.js www/style.css www/jquery-3.6.1.min.js
+static.g.h: www/index.html www/bundle.js www/style.css www/jquery-3.6.1.min.js.gz
 	xxd -i www/index.html > static.g.h
 	xxd -i www/bundle.js >> static.g.h
 	xxd -i www/style.css >> static.g.h
-	xxd -i www/jquery-3.6.1.min.js >> static.g.h
+	xxd -i www/jquery-3.6.1.min.js.gz >> static.g.h
 	sed -i "s/unsigned char [^[:space:]]\+\[\]/& PROGMEM/g" static.g.h
 
 clean:
