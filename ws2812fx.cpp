@@ -141,7 +141,12 @@ void Ws2812fxDriver::setColor(uint32_t value) {
 }
 
 uint16_t Ws2812fxDriver::color_waves() {
-    static uint8_t palette_number_ = 0;
+    static int8_t palette_number_ = -1;
+
+    if (palette_number_ == -1) {
+        palette_number_ = 0;
+        target_ = gGradientPalettes[palette_number_].p;
+    }
 
     EVERY_N_SECONDS(STRANDS_SECONDS_PER_PALETTE) {
         palette_number_ = addmod8(palette_number_, 1, gGradientPaletteCount);
